@@ -44,9 +44,10 @@ def register_view(request):
 
     form = RegisterForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "Регистрация завершена. Теперь войдите в аккаунт.")
-        return redirect("users:login")
+        user = form.save()
+        login(request, user)
+        messages.success(request, "Регистрация завершена.")
+        return redirect("projects:list")
     return render(request, "users/register.html", {"form": form})
 
 

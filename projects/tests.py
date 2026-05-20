@@ -39,6 +39,8 @@ class ProjectTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["page_obj"].object_list), 12)
+        root_response = self.client.get("/projects/")
+        self.assertEqual(root_response.status_code, 200)
 
     def test_favorite_participation_and_complete_endpoints(self):
         self.client.force_login(self.member)

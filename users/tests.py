@@ -43,9 +43,9 @@ class UserTests(TestCase):
             },
         )
 
-        self.assertRedirects(response, reverse("users:login"))
+        self.assertRedirects(response, reverse("projects:list"))
         user = User.objects.get(email="alice@example.com")
-        self.client.force_login(user)
+        self.assertEqual(str(self.client.session.get("_auth_user_id")), str(user.id))
 
         add_response = self.client.post(
             reverse("users:add-skill", args=[user.id]),
