@@ -1,4 +1,13 @@
 from pathlib import Path
+import os
+
+os.environ.setdefault("DJANGO_SECRET_KEY", "test-secret-key")
+os.environ.setdefault("POSTGRES_DB", "test")
+os.environ.setdefault("POSTGRES_USER", "test")
+os.environ.setdefault("POSTGRES_PASSWORD", "test")
+os.environ.setdefault("POSTGRES_HOST", "localhost")
+os.environ.setdefault("POSTGRES_PORT", "5432")
+os.environ.setdefault("TASK_VERSION", "1")
 
 from team_finder.settings import *  # noqa: F403,F401
 
