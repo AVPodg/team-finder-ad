@@ -1,4 +1,6 @@
 /team_finder/media/
+/test_media/
+/test_db.sqlite3
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
