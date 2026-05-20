@@ -22,6 +22,9 @@
         {% include 'includes/empty-project-card.html' with empty_title="Пока нет избранных проектов" empty_message="Добавляйте проекты в избранное, чтобы не потерять их" button_link="/projects/list" button_text="Посмотреть проекты" %}
         {% endfor %}
     </div>
+    <div id="empty-favorite-template" {% if projects %}style="display: none;"{% endif %}>
+        {% include 'includes/empty-project-card.html' with empty_title="Пока нет избранных проектов" empty_message="Добавляйте проекты в избранное, чтобы не потерять их" button_link="/projects/list" button_text="Посмотреть проекты" %}
+    </div>
 
     {% include 'includes/project-fav-toggle.js' %}
 </div>
