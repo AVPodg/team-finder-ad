@@ -31,7 +31,7 @@ def _form_errors(form):
 def register_view(request):
     if request.user.is_authenticated:
         if request.method == "POST":
-            return JsonResponse({"status": "error", "errors": {"__all__": ["Пользователь уже авторизован."]}}, status=400)
+            return JsonResponse({"status": "error", "errors": {"__all__": ["Пользователь уже авторизован."]}}, status=409)
         return redirect("projects:list")
 
     form = RegisterForm(request.POST or None)
@@ -48,7 +48,7 @@ def register_view(request):
 def login_view(request):
     if request.user.is_authenticated:
         if request.method == "POST":
-            return JsonResponse({"status": "error", "errors": {"__all__": ["Пользователь уже авторизован."]}}, status=400)
+            return JsonResponse({"status": "error", "errors": {"__all__": ["Пользователь уже авторизован."]}}, status=409)
         return redirect("projects:list")
 
     form = EmailAuthenticationForm(request, data=request.POST or None)
