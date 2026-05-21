@@ -45,7 +45,7 @@
                 {% include 'includes/svg/share.html' %}
             </a>
             {% if request.user.id == user.id %}
-            <a href="/users/edit-profile" class="black-button">
+            <a href="{% url 'users:edit-profile' %}" class="black-button">
                 {% include 'includes/svg/pen.html' %}
                 Редактировать
             </a>

@@ -54,7 +54,7 @@
 <div id="userSidebar" class="user-sidebar">
     <div class="sidebar-content">
         <a href="/users/{{ request.user.id }}/"><span>{% include 'includes/svg/profile.html' %} Мой профиль</span></a>
-        <a href="/users/edit-profile/"><span>{% include 'includes/svg/settings.html' %} Редактировать профиль</span></a>
+        <a href="{% url 'users:edit-profile' %}"><span>{% include 'includes/svg/settings.html' %} Редактировать профиль</span></a>
         <a href="/users/change-password/"><span>{% include 'includes/svg/lock.html' %} Сменить пароль</span></a>
         <a href="#"
            class="share-button"
