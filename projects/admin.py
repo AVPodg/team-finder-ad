@@ -9,6 +9,6 @@ class ProjectAdmin(admin.ModelAdmin):
     list_filter = ("status", "created_at")
     search_fields = ("name", "description", "owner__email", "owner__name", "owner__surname")
     autocomplete_fields = ("owner", "participants")
-    filter_horizontal = ("participants", "skills")
+    filter_horizontal = ("participants",)
 
 # Register your models here.

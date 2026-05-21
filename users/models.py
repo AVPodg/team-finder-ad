@@ -100,16 +100,6 @@ class UserManager(BaseUserManager):
         return self._create_user(email, password, **extra_fields)
 
 
-class Skill(models.Model):
-    name = models.CharField(max_length=64, unique=True)
-
-    class Meta:
-        ordering = ("name",)
-
-    def __str__(self) -> str:
-        return self.name
-
-
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=124)
@@ -122,8 +112,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(default=timezone.now, editable=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    favorites = models.ManyToManyField("projects.Project", blank=True, related_name="favorited_by")
-    skills = models.ManyToManyField(Skill, blank=True, related_name="users")
+    favorites = models.ManyToManyField("projects.Project", blank=True, related_name="interested_users")
 
     objects = UserManager()
 

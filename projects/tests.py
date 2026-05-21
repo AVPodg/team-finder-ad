@@ -1,8 +1,9 @@
-from django.test import TestCase, override_settings
+from django.core.exceptions import ValidationError
+from django.test import TestCase
 from django.urls import reverse
 
 from projects.models import Project
-from users.models import Skill, User
+from users.models import User
 
 
 class ProjectTests(TestCase):
@@ -41,6 +42,8 @@ class ProjectTests(TestCase):
         self.assertEqual(len(response.context["page_obj"].object_list), 12)
         root_response = self.client.get("/projects/")
         self.assertEqual(root_response.status_code, 200)
+        redirect_response = self.client.get("/")
+        self.assertRedirects(redirect_response, "/projects/list/")
 
     def test_favorite_participation_and_complete_endpoints(self):
         self.client.force_login(self.member)
@@ -59,25 +62,10 @@ class ProjectTests(TestCase):
         self.project.refresh_from_db()
         self.assertEqual(self.project.status, Project.STATUS_CLOSED)
 
-    @override_settings(TASK_VERSION="3")
-    def test_project_skill_endpoints_and_filter(self):
-        self.client.force_login(self.owner)
-        add_response = self.client.post(
-            reverse("projects:add-skill", args=[self.project.id]),
-            data='{"name":"Python"}',
-            content_type="application/json",
-        )
+    def test_project_rejects_non_github_url(self):
+        project = Project(name="Bad", owner=self.owner, github_url="https://gitlab.com/team/project")
 
-        self.assertEqual(add_response.status_code, 200)
-        skill = Skill.objects.get(name="Python")
-        self.assertTrue(self.project.skills.filter(pk=skill.pk).exists())
-
-        list_response = self.client.get(reverse("projects:list"), {"skill": "Python"})
-        self.assertEqual(list_response.status_code, 200)
-        self.assertEqual(list(list_response.context["page_obj"].object_list), [self.project])
-
-        remove_response = self.client.post(reverse("projects:remove-skill", args=[self.project.id, skill.id]))
-        self.assertEqual(remove_response.status_code, 200)
-        self.assertFalse(self.project.skills.filter(pk=skill.pk).exists())
+        with self.assertRaises(ValidationError):
+            project.full_clean()
 
 # Create your tests here.
