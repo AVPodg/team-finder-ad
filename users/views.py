@@ -5,7 +5,6 @@ from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.paginator import Paginator
-from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from users.forms import EmailAuthenticationForm, RegisterForm, UserUpdateForm
@@ -24,14 +23,8 @@ def _paginate(request, queryset):
     return paginator.get_page(request.GET.get("page"))
 
 
-def _form_errors(form):
-    return {field: [str(error) for error in errors] for field, errors in form.errors.items()}
-
-
 def register_view(request):
     if request.user.is_authenticated:
-        if request.method == "POST":
-            return JsonResponse({"status": "error", "errors": {"__all__": ["Пользователь уже авторизован."]}}, status=409)
         return redirect("projects:list")
 
     form = RegisterForm(request.POST or None)
@@ -39,25 +32,19 @@ def register_view(request):
         user = form.save()
         login(request, user)
         messages.success(request, "Регистрация завершена.")
-        return JsonResponse({"status": "ok", "user_id": user.id, "email": user.email}, status=201)
-    if request.method == "POST":
-        return JsonResponse({"status": "error", "errors": _form_errors(form)}, status=400)
+        return redirect("projects:list")
     return render(request, "users/register.html", {"form": form})
 
 
 def login_view(request):
     if request.user.is_authenticated:
-        if request.method == "POST":
-            return JsonResponse({"status": "error", "errors": {"__all__": ["Пользователь уже авторизован."]}}, status=409)
         return redirect("projects:list")
 
     form = EmailAuthenticationForm(request, data=request.POST or None)
     if request.method == "POST" and form.is_valid():
         user = form.get_user()
         login(request, user)
-        return JsonResponse({"status": "ok", "user_id": user.id, "email": user.email})
-    if request.method == "POST":
-        return JsonResponse({"status": "error", "errors": _form_errors(form)}, status=400)
+        return redirect("projects:list")
     return render(request, "users/login.html", {"form": form})
 
 
@@ -107,14 +94,10 @@ def list_view(request):
 
 def change_password_view(request):
     if not request.user.is_authenticated:
-        if request.method == "POST":
-            return JsonResponse({"status": "error", "errors": {"__all__": ["Требуется авторизация."]}}, status=403)
         return redirect("users:login")
     form = PasswordChangeForm(request.user, request.POST or None)
     if request.method == "POST" and form.is_valid():
         user = form.save()
         update_session_auth_hash(request, user)
-        return JsonResponse({"status": "ok"})
-    if request.method == "POST":
-        return JsonResponse({"status": "error", "errors": _form_errors(form)}, status=400)
+        return redirect("users:detail", user_id=request.user.id)
     return render(request, "users/change_password.html", {"form": form})

@@ -43,8 +43,7 @@ class UserTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.json()["status"], "ok")
+        self.assertRedirects(response, reverse("projects:list"))
         user = User.objects.get(email="alice@example.com")
         self.assertEqual(str(self.client.session.get("_auth_user_id")), str(user.id))
 
@@ -60,12 +59,11 @@ class UserTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 400)
-        payload = response.json()
-        self.assertEqual(payload["status"], "error")
-        self.assertIn("phone", payload["errors"])
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "users/register.html")
+        self.assertIn("phone", response.context["form"].errors)
 
-    def test_login_returns_json(self):
+    def test_login_redirects_on_success(self):
         user = User.objects.create_user(
             email="alice@example.com",
             password="password123",
@@ -82,12 +80,10 @@ class UserTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
-        payload = response.json()
-        self.assertEqual(payload["status"], "ok")
-        self.assertEqual(payload["user_id"], user.id)
+        self.assertRedirects(response, reverse("projects:list"))
+        self.assertEqual(str(self.client.session.get("_auth_user_id")), str(user.id))
 
-    def test_change_password_returns_json(self):
+    def test_change_password_redirects_on_success(self):
         user = User.objects.create_user(
             email="alice@example.com",
             password="password123",
@@ -106,8 +102,7 @@ class UserTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["status"], "ok")
+        self.assertRedirects(response, reverse("users:detail", args=[user.id]))
         user.refresh_from_db()
         self.assertTrue(user.check_password("new-password-123"))
 

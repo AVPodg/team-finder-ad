@@ -66,7 +66,7 @@
                 {% include 'includes/svg/share.html' %}
             </a>
             {% if user.id == project.owner.id %}
-                <a href="/projects/{{ project.id }}/edit" class="black-button">
+                <a href="/projects/{{ project.id }}/edit/" class="black-button">
                     {% include 'includes/svg/pen.html' %}
                     Редактировать
                 </a>
