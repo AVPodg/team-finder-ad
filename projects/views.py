@@ -107,7 +107,7 @@ def complete_view(request, project_id: int):
 
     project = get_object_or_404(Project, pk=project_id, owner=request.user)
     if project.status != Project.STATUS_OPEN:
-        return JsonResponse({"status": "forbidden"}, status=403)
+        return JsonResponse({"status": "invalid"}, status=400)
     project.status = Project.STATUS_CLOSED
     project.save(update_fields=["status"])
     return JsonResponse({"status": "ok"})

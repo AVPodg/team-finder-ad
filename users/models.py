@@ -120,7 +120,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ["name", "surname", "phone"]
 
     class Meta:
-        ordering = ("id",)
+        ordering = ("-created_at", "-id")
 
     def __str__(self) -> str:
         return f"{self.name} {self.surname}".strip() or self.email

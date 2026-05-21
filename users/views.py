@@ -70,7 +70,7 @@ def edit_profile_view(request):
 
 
 def list_view(request):
-    users = User.objects.order_by("id")
+    users = User.objects.prefetch_related("owned_projects", "favorites", "participated_projects").order_by("id")
     active_filter = request.GET.get("filter", "")
     if request.user.is_authenticated:
         if active_filter == "owners-of-favorite-projects":
@@ -99,4 +99,3 @@ def change_password_view(request):
         update_session_auth_hash(request, user)
         return redirect("users:detail", user_id=request.user.id)
     return render(request, "users/change_password.html", {"form": form})
-
