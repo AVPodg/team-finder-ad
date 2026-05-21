@@ -140,6 +140,20 @@ class UserTests(TestCase):
         user.refresh_from_db()
         self.assertEqual(user.name, "New")
 
+    def test_edit_profile_form_posts_to_users_root_route(self):
+        user = User.objects.create_user(
+            email="profile-form@example.com",
+            password="password123",
+            name="Old",
+            surname="Name",
+            phone="+79990000009",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get("/users/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'action="/users/"')
+
     def test_legacy_edit_profile_route_is_not_available(self):
         user = User.objects.create_user(
             email="profile2@example.com",

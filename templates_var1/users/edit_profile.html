@@ -11,7 +11,7 @@
 {% block content %}
 <div class="profile-edit-container">
     <h2 class="form-title">Редактирование профиля</h2>
-    <form method="post" enctype="multipart/form-data" class="profile-edit-form">
+    <form method="post" action="{% url 'users:edit-profile' %}" enctype="multipart/form-data" class="profile-edit-form">
         {% csrf_token %}
 
         <div class="avatar-upload">
