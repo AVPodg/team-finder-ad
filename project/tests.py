@@ -45,6 +45,20 @@ class ProjectTests(TestCase):
         redirect_response = self.client.get("/")
         self.assertRedirects(redirect_response, "/projects/list/")
 
+    def test_project_list_is_sorted_from_newest_to_oldest(self):
+        older = Project.objects.create(name="Old", owner=self.owner)
+        newer = Project.objects.create(name="New", owner=self.owner)
+
+        response = self.client.get(reverse("projects:list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context["page_obj"].object_list[:2]), [newer, older])
+
+    def test_create_project_requires_login(self):
+        response = self.client.get("/projects/create-project/")
+
+        self.assertRedirects(response, "/users/login/?next=/projects/create-project/")
+
     def test_favorite_participation_and_complete_endpoints(self):
         self.client.force_login(self.member)
 
