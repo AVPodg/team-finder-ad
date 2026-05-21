@@ -26,9 +26,4 @@ class Migration(migrations.Migration):
             name='participants',
             field=models.ManyToManyField(blank=True, related_name='participated_projects', to=settings.AUTH_USER_MODEL),
         ),
-        migrations.AddField(
-            model_name='project',
-            name='skills',
-            field=models.ManyToManyField(blank=True, related_name='projects', to='users.skill'),
-        ),
     ]

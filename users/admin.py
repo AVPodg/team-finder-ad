@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from users.forms import AdminUserChangeForm, AdminUserCreationForm
-from users.models import Skill, User
+from users.models import User
 
 
 @admin.register(User)
@@ -17,7 +17,7 @@ class UserAdmin(BaseUserAdmin):
         (None, {"fields": ("email", "password")}),
         (
             "Личные данные",
-            {"fields": ("name", "surname", "avatar", "phone", "github_url", "about", "skills", "favorites")},
+            {"fields": ("name", "surname", "avatar", "phone", "github_url", "about", "favorites")},
         ),
         ("Права", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
         ("Важные даты", {"fields": ("last_login", "date_joined", "created_at")}),
@@ -31,12 +31,6 @@ class UserAdmin(BaseUserAdmin):
             },
         ),
     )
-    filter_horizontal = ("groups", "user_permissions", "favorites", "skills")
-
-
-@admin.register(Skill)
-class SkillAdmin(admin.ModelAdmin):
-    list_display = ("name",)
-    search_fields = ("name",)
+    filter_horizontal = ("groups", "user_permissions", "favorites")
 
 # Register your models here.
