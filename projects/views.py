@@ -80,7 +80,7 @@ def toggle_favorite_view(request, project_id: int):
         request.user.favorites.remove(project)
     else:
         request.user.favorites.add(project)
-    return JsonResponse({"status": "ok", "favorite": not is_favorite, "favorited": not is_favorite})
+    return JsonResponse({"status": "ok", "favorited": not is_favorite})
 
 
 @require_http_methods(["POST"])

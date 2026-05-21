@@ -5,7 +5,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path("", lambda request: redirect("/projects/list/", permanent=False)),
+    path("", lambda request: redirect("projects:list", permanent=False)),
     path("admin/", admin.site.urls),
     path("users/", include("users.urls", namespace="users")),
     path("projects/", include("projects.urls", namespace="projects")),
