@@ -140,6 +140,19 @@ class UserTests(TestCase):
         user.refresh_from_db()
         self.assertEqual(user.name, "New")
 
+    def test_legacy_edit_profile_route_is_not_available(self):
+        user = User.objects.create_user(
+            email="profile2@example.com",
+            password="password123",
+            name="Old",
+            surname="Name",
+            phone="+79990000008",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get("/users/edit-profile/")
+        self.assertEqual(response.status_code, 404)
+
     def test_users_list_is_sorted_by_id(self):
         first = User.objects.create_user(
             email="first@example.com",
