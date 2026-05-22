@@ -9,8 +9,12 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body data-page="{% block page_id %}default{% endblock %}">
+
+{% csrf_token %}
+
 {% include 'includes/header.html' %}
 {% block content %}{% endblock %}
+
 <script src="{% static 'js/utils.js' %}"></script>
 <script src="{% static 'js/share.js' %}"></script>
 <script src="{% static 'js/header.js' %}"></script>

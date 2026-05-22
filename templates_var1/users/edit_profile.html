@@ -11,7 +11,8 @@
 {% block content %}
 <div class="profile-edit-container">
     <h2 class="form-title">Редактирование профиля</h2>
-    <form method="post" enctype="multipart/form-data" class="profile-edit-form">
+    
+    <form method="post" action="{% url 'users:edit-profile' user_id=user.id %}" enctype="multipart/form-data" class="profile-edit-form">
         {% csrf_token %}
 
         <div class="avatar-upload">
@@ -44,10 +45,12 @@
             {{ form.about }}
         </div>
 
+        {% if form.email %}
         <div class="form-field">
             {{ form.email.label_tag }}
             {{ form.email }}
         </div>
+        {% endif %}
 
         <div class="form-row">
             <div class="form-field">
@@ -64,14 +67,14 @@
         <div class="form-errors">
             {% for field, errors in form.errors.items %}
                 {% for error in errors %}
-                    <p>{{ error }}</p>
+                    <p><strong>{{ field }}</strong>: {{ error }}</p>
                 {% endfor %}
             {% endfor %}
         </div>
         {% endif %}
 
         <div class="form-actions">
-            <a href="/users/{{ user.id }}" class="cancel-button">Отмена</a>
+            <a href="{% url 'users:detail' user_id=user.id %}" class="cancel-button">Отмена</a>
             <button type="submit" class="save-button">Сохранить</button>
         </div>
     </form>

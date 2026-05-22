@@ -1,6 +1,8 @@
+import json
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.http import JsonResponse
+from django.db.models import Q
+from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
@@ -21,12 +23,24 @@ def _prime_request_user(request):
 
 def list_view(request):
     _prime_request_user(request)
+    
     projects = Project.objects.select_related("owner").prefetch_related("participants")
+    
+    search_query = request.GET.get('search', '').trim() if hasattr(request.GET.get('search'), 'trim') else request.GET.get('search', '')
+    if search_query:
+        projects = projects.filter(
+            Q(name__icontains=search_query) | 
+            Q(description__icontains=search_query)
+        )
+        
     page_obj = _paginate(request, projects)
+
+    query_prefix = f"search={search_query}" if search_query else ""
+    
     context = {
         "projects": page_obj.object_list,
         "page_obj": page_obj,
-        "query_prefix": "",
+        "query_prefix": query_prefix,
     }
     return render(request, "projects/project_list.html", context)
 
@@ -54,7 +68,11 @@ def create_view(request):
 
 @login_required
 def edit_view(request, project_id: int):
-    project = get_object_or_404(Project, pk=project_id, owner=request.user)
+    project = get_object_or_404(Project, pk=project_id)
+    
+    if project.owner_id != request.user.id and not request.user.is_staff:
+        return redirect("projects:detail", project_id=project.id)
+        
     form = ProjectForm(request.POST or None, instance=project)
     if request.method == "POST" and form.is_valid():
         project = form.save()
@@ -89,7 +107,9 @@ def toggle_participate_view(request, project_id: int):
         return JsonResponse({"status": "auth_required"}, status=403)
 
     project = get_object_or_404(Project, pk=project_id)
-    if project.owner_id == request.user.id or project.status != Project.STATUS_OPEN:
+    status_open = getattr(Project, 'STATUS_OPEN', 'open')
+    
+    if project.owner_id == request.user.id or project.status != status_open:
         return JsonResponse({"status": "forbidden"}, status=403)
 
     is_participant = project.participants.filter(pk=request.user.pk).exists()
@@ -97,7 +117,8 @@ def toggle_participate_view(request, project_id: int):
         project.participants.remove(request.user)
     else:
         project.participants.add(request.user)
-    return JsonResponse({"status": "ok", "participant": not is_participant})
+        
+    return JsonResponse({"status": "ok", "joined": not is_participant})
 
 
 @require_http_methods(["POST"])
@@ -105,9 +126,29 @@ def complete_view(request, project_id: int):
     if not request.user.is_authenticated:
         return JsonResponse({"status": "auth_required"}, status=403)
 
-    project = get_object_or_404(Project, pk=project_id, owner=request.user)
-    if project.status != Project.STATUS_OPEN:
+    project = get_object_or_404(Project, pk=project_id)
+    
+    if project.owner_id != request.user.id and not request.user.is_staff:
+        return JsonResponse({"status": "forbidden"}, status=403)
+
+    status_open = getattr(Project, 'STATUS_OPEN', 'open')
+    status_closed = getattr(Project, 'STATUS_CLOSED', 'closed')
+
+    if project.status != status_open:
         return JsonResponse({"status": "invalid"}, status=400)
-    project.status = Project.STATUS_CLOSED
+        
+    project.status = status_closed
     project.save(update_fields=["status"])
-    return JsonResponse({"status": "ok"})
+
+    return JsonResponse({"status": "ok", "project_status": "closed"})
+
+
+@require_http_methods(["POST"])
+@login_required
+def delete_view(request, project_id: int):
+    project = get_object_or_404(Project, pk=project_id)
+    if project.owner_id != request.user.id and not request.user.is_staff:
+        return HttpResponseForbidden("Вы не можете удалить этот проект.")
+        
+    project.delete()
+    return redirect("projects:list")

@@ -62,12 +62,18 @@ def detail_view(request, user_id: int):
 
 
 @login_required
-def edit_profile_view(request):
-    form = UserUpdateForm(request.POST or None, request.FILES or None, instance=request.user)
+def edit_profile_view(request, user_id: int):
+    if request.user.id != user_id and not request.user.is_staff:
+        return redirect("users:detail", user_id=user_id)
+
+    profile_user = get_object_or_404(User, pk=user_id)
+    form = UserUpdateForm(request.POST or None, request.FILES or None, instance=profile_user)
+    
     if request.method == "POST" and form.is_valid():
         form.save()
-        return redirect("users:detail", user_id=request.user.id)
-    return render(request, "users/edit_profile.html", {"form": form, "user": request.user})
+        return redirect("users:detail", user_id=profile_user.id)
+        
+    return render(request, "users/edit_profile.html", {"form": form, "user": profile_user})
 
 
 def list_view(request):

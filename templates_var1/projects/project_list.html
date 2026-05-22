@@ -1,125 +1,66 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ project.name }}{% endblock %}
+{% block title %}Актуальные проекты — TeamFinder{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/project_details.css' %}">
+<link rel="stylesheet" href="{% static 'css/project_list.css' %}">
 {% endblock %}
 
-{% with page_id="project" %}
 {% block content %}
-<div class="project-container">
-    <div class="project-card">
-        <div class="project-card-header">
-            <a href="/users/{{ project.owner.id }}">
-                <div class="project-card-header-left">
-                    {% if project.owner.avatar %}
-                        <img src="{{ project.owner.avatar.url }}" alt="Аватар автора" class="project-author-avatar">
-                    {% else %}
-                        <img src="{% static 'images/default-avatar.png' %}" alt="Аватар по умолчанию" class="project-author-avatar">
-                    {% endif %}
-                    <div class="project-meta">
-                        <span class="project-author">{{ project.owner.name }} {{ project.owner.surname }}</span>
-                        <span class="project-date">{{ project.created_at|date:"d.m.Y" }}</span>
-                    </div>
-                </div>
-            </a>
-            <div class="project-card-header-right">
-                <span class="project-status-black">
-                    {% if project.status == "open" %}
-                        Открыт
-                    {% elif project.status == "closed" %}
-                        Закрыт
-                    {% else %}
-                        {{ project.status }}
-                    {% endif %}
-                </span>
-            </div>
+<!-- data-page="projects-list" указывает вашему файлу projects.js, что нужно включить логику лайков -->
+<div class="project-container" data-page="projects-list">
+    
+    <!-- ВЕРХНЯЯ ПАНЕЛЬ: ЗАГОЛОВКИ И КНОПКА СОЗДАНИЯ -->
+    <div class="project-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2 class="project-title" style="margin: 0; font-size: 2rem; font-weight: 700;">Актуальные проекты</h2>
+            <p class="project-subtitle" style="margin: 0.5rem 0 0 0; color: #666;">Найдите интересный проект и присоединитесь к команде</p>
         </div>
-
-        <div class="project-card-body">
-                <h2 class="project-title">{{ project.name }}</h2>
-                <p class="project-description">{{ project.description }}</p>
-
-                {% if project.github_url %}
-                <p class="project-link">
-                    {% include 'includes/svg/github.html' %}
-                    <a href="{{ project.github_url }}" target="_blank">Репозиторий на GitHub</a>
-                </p>
-                {% endif %}
-        </div>
-        <div class="project-actions">
-            {% if user.is_authenticated %}
-            <button
-                    class="black-button project-fav-icon {% if project in user.favorites.all %}favorite{% else %}not-favorite{% endif %}"
-                    data-project-id="{{ project.id }}"
-                    data-fav="{% if project in user.favorites.all %}true{% else %}false{% endif %}"
-                    title="Добавить в избранное"
-            >
-                {% include 'includes/svg/heart.html' %}
-            </button>
-            {% endif %}
-            <a href="#"
-               class="black-button black-button-share share-button"
-               data-url="/projects/{{ project.id }}">
-                {% include 'includes/svg/share.html' %}
-            </a>
-            {% if user.id == project.owner.id %}
-                <a href="/projects/{{ project.id }}/edit/" class="black-button">
-                    {% include 'includes/svg/pen.html' %}
-                    Редактировать
-                </a>
-                {% if project.status == "open" %}
-                    <button class="black-button" id="complete-project-btn" data-id="{{ project.id }}">
-                        Завершить проект
-                    </button>
-                {% endif %}
-            {% else %}
-                {% if user.is_authenticated %}
-                    <button id="participate-btn" class="black-button"
-                            data-project="{{ project.id }}"
-                            data-user-id="{{ request.user.id }}"
-                            data-user-name="{{ request.user.name }} {{ request.user.surname }}"
-                            data-user-avatar="{% if request.user.avatar %}{{ request.user.avatar.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}"
-                    >
-                        {% if request.user in project.participants.all %}
-                            Отказаться от участия
-                        {% else %}
-                            Участвовать
-                        {% endif %}
-                    </button>
-                {% endif %}
-            {% endif %}
-        </div>
-
+        {% if user.is_authenticated %}
+            <a href="/projects/create-project/" class="black-button" style="text-decoration: none; padding: 0.75rem 1.5rem; background: #000; color: #fff; border-radius: 6px; font-weight: 500;">+ Создать проект</a>
+        {% endif %}
     </div>
 
-    <div class="project-participants-card">
-    <h3>Участники проекта (<span id="participants-count" style="display:inline">{{ project.participants.all|length }}</span>)</h3>
-    <div id="participants-list" class="participants-list">
-        {% for member in project.participants.all %}
-        <a href="/users/{{ member.id }}" id="participant-{{ member.id }}">
-            <div class="participant-item">
-                {% if member.avatar %}
-                    <img src="{{ member.avatar.url }}" alt="Аватар" class="participant-avatar">
-                {% else %}
-                    <img src="{% static 'images/default-avatar.png' %}" alt="Аватар по умолчанию" class="participant-avatar">
-                {% endif %}
-                <div class="participant-info">
-                    <span class="participant-name">{{ member.name }} {{ member.surname }}</span>
-                    <span class="participant-role">
-                        {% if member.id == project.owner.id %}Автор проекта{% else %}Участник{% endif %}
-                    </span>
-                </div>
-            </div>
-        </a>
+    <!-- БЛОК ПОИСКА (Отправляет GET-запрос с параметром search) -->
+    <div class="search-section" style="margin-bottom: 2rem;">
+        <form action="" method="get" style="display: flex; gap: 0.5rem; max-width: 600px;">
+            <input type="text" name="search" value="{{ request.GET.search|default:'' }}" placeholder="Поиск проектов по названию или описанию..." style="flex: 1; padding: 0.75rem 1rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;">
+            <button type="submit" class="black-button" style="padding: 0.75rem 1.5rem; background: #000; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem;">Найти</button>
+            {% if request.GET.search %}
+                <a href="?" class="page-btn" style="display: flex; align-items: center; justify-content: center; padding: 0.75rem 1rem; border: 1px solid #ccc; border-radius: 6px; background: #f5f5f5; text-decoration: none; color: #333;">Сбросить</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- СЕТКА ДЛЯ ВЫВОДА КАРТОЧЕК ПРОЕКТОВ -->
+    <div class="projects-grid">
+        {% for proj in projects %}
+            {% include 'includes/project-card.html' with project=proj %}
         {% empty %}
-        <p id="no-participants">Пока нет участников</p>
+            {% include 'includes/empty-project-card.html' with empty_title="Пока нет проектов" empty_message="Создавайте проекты и делитесь ими с другими пользователями!" button_link="/projects/create-project/" button_text="+ Создать проект" %}
         {% endfor %}
-        </div>
     </div>
-    {% include 'includes/project-fav-toggle.js' %}
+
+    <!-- ПАГИНАЦИЯ (Постраничный вывод) -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination" style="margin-top: 2rem; display: flex; gap: 0.5rem; justify-content: center;">
+        {% if page_obj.has_previous %}
+            <a href="?{% if query_prefix %}{{ query_prefix }}&{% endif %}page={{ page_obj.previous_page_number }}" class="page-btn">←</a>
+        {% endif %}
+        
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="page-btn active" style="background: #000; color: #fff; border-color: #000; padding: 0.5rem 0.75rem; border-radius: 4px;">{{ num }}</span>
+            {% else %}
+                <a href="?{% if query_prefix %}{{ query_prefix }}&{% endif %}page={{ num }}" class="page-btn" style="padding: 0.5rem 0.75rem; border: 1px solid #ccc; border-radius: 4px; text-decoration: none; color: #333;">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+            <a href="?{% if query_prefix %}{{ query_prefix }}&{% endif %}page={{ page_obj.next_page_number }}" class="page-btn">→</a>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
-{% endwith %}

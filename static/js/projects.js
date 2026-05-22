@@ -1,113 +1,84 @@
-// Project-specific JS (complete project action + toggle participate)
-(function(){
-  document.addEventListener("DOMContentLoaded", function() {
-    const completeBtn = document.getElementById("complete-project-btn");
-    if (completeBtn) {
-      completeBtn.addEventListener("click", function(e) {
-        e.preventDefault();
-        const projectId = completeBtn.dataset.id;
-        if (!projectId) return;
+document.addEventListener('DOMContentLoaded', function () {
+    const projectContainer = document.querySelector('[data-page="projects-list"]');
+    if (!projectContainer) return;
 
-        fetch(`/projects/${projectId}/complete/`, {
-          method: "POST",
-          headers: {
-            "X-CSRFToken": window.getCookie ? window.getCookie("csrftoken") : "",
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({})
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.status === "ok") {
-            const statusEl = document.querySelector(".project-status-black");
-            if (statusEl) statusEl.textContent = "Закрыт";
-            completeBtn.remove();
-            if (window.toast) window.toast("Проект завершён", { type: 'info' });
-          } else {
-            if (window.toast) window.toast("Ошибка при завершении проекта", { type: 'error' });
-            else alert("Ошибка при завершении проекта");
-          }
-        })
-        .catch(err => {
-          console.error("Ошибка запроса:", err);
-          if (window.toast) window.toast("Ошибка сети", { type: 'error' });
-        });
-      });
-    }
+    // ОБРАБОТКА КЛИКОВ (И ЛАЙКИ, И УЧАСТИЕ)
+    projectContainer.addEventListener('click', function (e) {
+        
+        // 1. Клик по лайку
+        const favBtn = e.target.closest('.project-fav-icon');
+        if (favBtn) {
+            e.preventDefault();
+            const url = favBtn.getAttribute('data-url');
 
-    const participateBtn = document.getElementById("participate-btn");
-    const participantsList = document.getElementById("participants-list");
-    const participantsCount = document.getElementById("participants-count");
-    if (participateBtn && participantsList && participantsCount) {
-      const userId = participateBtn.dataset.userId || null;
-      const projectId = participateBtn.dataset.project;
-      const userName = participateBtn.dataset.userName || "";
-      const userAvatar = participateBtn.dataset.userAvatar || "";
-
-      participateBtn.addEventListener("click", function(e) {
-        e.preventDefault();
-        if (!projectId) return;
-
-        fetch(`/projects/${projectId}/toggle-participate/`, {
-          method: "POST",
-          headers: {
-            "X-CSRFToken": window.getCookie ? window.getCookie("csrftoken") : "",
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({})
-        })
-        .then(resp => resp.json())
-        .then(data => {
-          if (data.status !== "ok") {
-            if (window.toast) window.toast("Ошибка при изменении участия", { type: 'error' });
-            else alert("Ошибка при изменении участия");
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    if (data.favorited) {
+                        favBtn.classList.remove('not-favorite');
+                        favBtn.classList.add('favorite');
+                    } else {
+                        favBtn.classList.remove('favorite');
+                        favBtn.classList.add('not-favorite');
+                    }
+                } else if (data.status === 'auth_required') {
+                    alert('Пожалуйста, авторизуйтесь для добавления в избранное.');
+                }
+            })
+            .catch(err => console.error(err));
             return;
-          }
+        }
 
-          if (data.participant) {
-            participateBtn.textContent = "Отказаться от участия";
+        // 2. Клик по кнопке участия
+        const joinBtn = e.target.closest('.project-join-btn');
+        if (joinBtn) {
+            e.preventDefault();
+            const url = joinBtn.getAttribute('data-url');
 
-            const noParticipants = document.getElementById("no-participants");
-            if (noParticipants) noParticipants.remove();
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    if (data.joined) {
+                        joinBtn.textContent = 'Вы участвуете';
+                        joinBtn.classList.add('joined'); // можно стилизовать в CSS
+                    } else {
+                        joinBtn.textContent = 'Стать участником';
+                        joinBtn.classList.remove('joined');
+                    }
+                } else {
+                    alert('Действие недоступно');
+                }
+            })
+            .catch(err => console.error(err));
+        }
+    });
 
-            const a = document.createElement("a");
-            a.href = `/users/${userId}`;
-            a.id = `participant-${userId}`;
-            a.innerHTML = `
-              <div class="participant-item">
-                <img src="${userAvatar}" alt="Аватар" class="participant-avatar">
-                <div class="participant-info">
-                  <span class="participant-name">${userName}</span>
-                  <span class="participant-role">Участник</span>
-                </div>
-              </div>
-            `;
-            participantsList.appendChild(a);
-
-            participantsCount.textContent = parseInt(participantsCount.textContent) + 1;
-
-          } else {
-            participateBtn.textContent = "Участвовать";
-
-            const el = document.getElementById(`participant-${userId}`);
-            if (el) el.remove();
-
-            const newCount = parseInt(participantsCount.textContent) - 1;
-            participantsCount.textContent = newCount;
-
-            if (newCount === 0) {
-              const p = document.createElement("p");
-              p.id = "no-participants";
-              p.textContent = "Пока нет участников";
-              participantsList.appendChild(p);
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
             }
-          }
-        })
-        .catch(err => {
-          console.error("Ошибка запроса:", err);
-          if (window.toast) window.toast("Ошибка сети", { type: 'error' });
-        });
-      });
+        }
+        return cookieValue;
     }
-  });
-})();
+});

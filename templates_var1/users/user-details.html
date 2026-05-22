@@ -8,9 +8,8 @@
 <link rel="stylesheet" href="{% static 'css/profile.css' %}">
 {% endblock %}
 
-{% with page_id="profile" %}
 {% block content %}
-<div class="profile-container">
+<div class="profile-container" data-page-id="profile">
     <div class="profile-header">
         <div class="profile-info">
             {% if user.avatar %}
@@ -41,18 +40,20 @@
         <div class="profile-actions">
             <a href="#"
                class="black-button black-button-share share-button"
-               data-url="/users/{{ user.id }}">
+               data-url="{% url 'users:detail' user_id=user.id %}">
                 {% include 'includes/svg/share.html' %}
             </a>
-            {% if request.user.id == user.id %}
-            <a href="{% url 'users:edit-profile' %}" class="black-button">
+            {% if request.user.id == user.id or request.user.is_staff %}
+            <a href="{% url 'users:edit-profile' user_id=user.id %}" class="black-button">
                 {% include 'includes/svg/pen.html' %}
                 Редактировать
             </a>
+            {% if request.user.id == user.id %}
             <a href="/projects/create-project/" class="black-button">
                 {% include 'includes/svg/plus.html' %}
                 Добавить проект
             </a>
+            {% endif %}
             {% endif %}
         </div>
     </div>
@@ -63,7 +64,7 @@
         {% for project in user.owned_projects.all %}
         <div class="collapsed-project-card">
             <div class="collapsed-project-card-header">
-                <h4><a href="/projects/{{ project.id }}">{{ project.name }}</a></h4>
+                <h4><a href="{% url 'projects:detail' project_id=project.id %}">{{ project.name }}</a></h4>
                 <span class="project-status-black">
                     {% if project.status == "open" %}
                         Открыт
@@ -104,4 +105,3 @@
     </div>
 </div>
 {% endblock %}
-{% endwith %}

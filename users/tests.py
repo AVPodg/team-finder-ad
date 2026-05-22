@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 
-from projects.models import Project
+from project.models import Project
 from users.models import User
 
 
@@ -43,7 +43,8 @@ class UserTests(TestCase):
             },
         )
 
-        self.assertRedirects(response, reverse("projects:list"))
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["status"], "ok")
         user = User.objects.get(email="alice@example.com")
         self.assertEqual(str(self.client.session.get("_auth_user_id")), str(user.id))
 
@@ -59,11 +60,12 @@ class UserTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "users/register.html")
-        self.assertIn("phone", response.context["form"].errors)
+        self.assertEqual(response.status_code, 400)
+        payload = response.json()
+        self.assertEqual(payload["status"], "error")
+        self.assertIn("phone", payload["errors"])
 
-    def test_login_redirects_on_success(self):
+    def test_login_returns_json(self):
         user = User.objects.create_user(
             email="alice@example.com",
             password="password123",
@@ -80,10 +82,12 @@ class UserTests(TestCase):
             },
         )
 
-        self.assertRedirects(response, reverse("projects:list"))
-        self.assertEqual(str(self.client.session.get("_auth_user_id")), str(user.id))
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["status"], "ok")
+        self.assertEqual(payload["user_id"], user.id)
 
-    def test_change_password_redirects_on_success(self):
+    def test_change_password_returns_json(self):
         user = User.objects.create_user(
             email="alice@example.com",
             password="password123",
@@ -102,7 +106,8 @@ class UserTests(TestCase):
             },
         )
 
-        self.assertRedirects(response, reverse("users:detail", args=[user.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "ok")
         user.refresh_from_db()
         self.assertTrue(user.check_password("new-password-123"))
 
@@ -134,6 +139,9 @@ class UserTests(TestCase):
         self.assertRedirects(post_response, reverse("users:detail", args=[user.id]))
         user.refresh_from_db()
         self.assertEqual(user.name, "New")
+
+    def test_edit_profile_route_resolves_to_users_root(self):
+        self.assertEqual(reverse("users:edit-profile"), "/users/")
 
     def test_legacy_edit_profile_route_is_not_available(self):
         user = User.objects.create_user(
