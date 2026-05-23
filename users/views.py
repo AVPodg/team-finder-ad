@@ -55,7 +55,7 @@ def logout_view(request):
 
 def detail_view(request, user_id: int):
     profile_user = get_object_or_404(
-        User.objects.prefetch_related("owned_projects__participants"),
+        User.objects.prefetch_related("owned_projects__participants", "participated_projects__participants"),
         pk=user_id,
     )
     return render(request, "users/user-details.html", {"user": profile_user})

@@ -1,50 +1,174 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Актуальные проекты{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/project_list.css' %}">
-{% endblock %}
+{% block title %}{{ project.name }}{% endblock %}
 
 {% block content %}
-
-<div class="project-container" data-page="projects-list">
-    <div class="project-header">
-        <h2 class="project-title">Актуальные проекты</h2>
-        {% if projects %}
-            <a href="/projects/create-project/" class="black-button">+ Создать проект</a>
-        {% endif %}
-    </div>
-    <p class="project-subtitle">Найдите интересный проект и присоединитесь к команде</p>
-
-    <div class="projects-grid">
-        {% for project in page_obj %}
-            {% include 'includes/project-card.html' %}
-        {% empty %}
-            {% include 'includes/empty-project-card.html' with empty_title="Пока нет проектов" empty_message="Создавайте проекты и делитесь ими с другими пользователями!" button_link="/projects/create-project/" button_text="+ Создать проект" %}
-        {% endfor %}
+<div class="container mt-5">
+    <!-- Навигация назад -->
+    <div class="mb-3">
+        <a href="{% url 'projects:list' %}" class="text-secondary text-decoration-none">← Назад к проектам</a>
     </div>
 
-    {% if page_obj.has_other_pages %}
-    <div class="pagination">
-        {% if page_obj.has_previous %}
-            <a href="?{% if query_prefix %}{{ query_prefix }}&{% endif %}page={{ page_obj.previous_page_number }}" class="page-btn">←</a>
-        {% endif %}
-        
-        {% for num in page_obj.paginator.page_range %}
-            {% if page_obj.number == num %}
-                <span class="page-btn active">{{ num }}</span>
-            {% else %}
-                <a href="?{% if query_prefix %}{{ query_prefix }}&{% endif %}page={{ num }}" class="page-btn">{{ num }}</a>
-            {% endif %}
-        {% endfor %}
-        
-        {% if page_obj.has_next %}
-            <a href="?{% if query_prefix %}{{ query_prefix }}&{% endif %}page={{ page_obj.next_page_number }}" class="page-btn">→</a>
-        {% endif %}
-    </div>
-    {% endif %}
+    <div class="row">
+        <!-- Основная информация о проекте -->
+        <div class="col-md-8">
+            <div class="card shadow-sm p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h1 class="mb-2">{{ project.name }}</h1>
+                        <span class="badge {% if project.status == 'open' %}bg-success{% else %}bg-secondary{% endif %} mb-3">
+                            {{ project.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    <!-- Кнопка Избранного (Вариант 1) -->
+                    {% if request.user.is_authenticated %}
+                        <button id="toggle-favorite-btn" class="btn {% if project in request.user.favorites.all %}btn-warning{% else %}btn-outline-warning{% endif %}" data-url="{% url 'projects:toggle-favorite' project.id %}">
+                            {% if project in request.user.favorites.all %}★ В избранном{% else %}☆ В избранное{% endif %}
+                        </button>
+                    {% endif %}
+                </div>
 
+                <p class="text-muted small">Создан: {{ project.created_at|date:"d.m.Y H:i" }}</p>
+                <hr>
+                
+                <h5 class="mt-4">Описание проекта</h5>
+                <p class="lead text-break">{{ project.description|default:"Описание отсутствует." }}</p>
+
+                {% if project.github_url %}
+                    <div class="mt-4">
+                        <h6>Ссылка на репозиторий:</h6>
+                        <a href="{{ project.github_url }}" target="_blank" class="text-decoration-none">
+                            <i class="bi bi-github"></i> {{ project.github_url }}
+                        </a>
+                    </div>
+                {% endif %}
+
+                <!-- Кнопки управления для владельца / админа -->
+                <div class="mt-5 d-flex gap-2">
+                    {% if request.user.is_authenticated and request.user == project.owner or request.user.is_staff %}
+                        <a href="{% url 'projects:edit' project.id %}" class="btn btn-outline-primary">Редактировать</a>
+                        
+                        {% if project.status == 'open' %}
+                            <button id="complete-project-btn" class="btn btn-success" data-url="{% url 'projects:complete' project.id %}">
+                                Завершить проект
+                            </button>
+                        {% endif %}
+                        
+                        <form action="{% url 'projects:delete' project.id %}" method="POST" onsubmit="return confirm('Вы уверены, что хотите удалить проект?');" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Удалить</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Боковая панель: Команда -->
+        <div class="col-md-4">
+            <!-- Владелец -->
+            <div class="card shadow-sm p-3 mb-4 text-center">
+                <h5 class="card-title text-muted">Организатор</h5>
+                <div class="my-3">
+                    {% if project.owner.avatar %}
+                        <img src="{{ project.owner.avatar.url }}" alt="{{ project.owner.name }}" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover;">
+                    {% endif %}
+                </div>
+                <h6><a href="{% url 'users:detail' project.owner.id %}" class="text-dark text-decoration-none">{{ project.owner.name }} {{ project.owner.surname }}</a></h6>
+                <p class="small text-muted">{{ project.owner.email }}</p>
+            </div>
+
+            <!-- Участники -->
+            <div class="card shadow-sm p-3">
+                <h5 class="card-title text-muted mb-3">Команда проекта</h5>
+                <div class="list-group list-group-flush mb-3">
+                    {% for participant in project.participants.all %}
+                        <div class="list-group-item d-flex align-items-center justify-content-between px-0">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="small font-weight-bold">{{ participant.name }} {{ participant.surname }}</span>
+                            </div>
+                            <a href="{% url 'users:detail' participant.id %}" class="btn btn-sm btn-outline-secondary">Профиль</a>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted small my-2">В команде пока никого нет.</p>
+                    {% endfor %}
+                </div>
+
+                <!-- Кнопка Вступить / Выйти (Для авторизованных, кто не является владельцем) -->
+                {% if request.user.is_authenticated and request.user != project.owner and project.status == 'open' %}
+                    <button id="toggle-participate-btn" class="btn w-100 {% if request.user in project.participants.all %}btn-danger{% else %}btn-primary{% endif %}" data-url="{% url 'projects:toggle-participate' project.id %}">
+                        {% if request.user in project.participants.all %}Покинуть команду{% else %}Вступить в команду{% endif %}
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- AJAX скрипты для динамического обновления кнопок согласно ТЗ -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const getCsrfToken = () => document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+    // 1. Избранное
+    const favBtn = document.getElementById('toggle-favorite-btn');
+    if (favBtn) {
+        favBtn.addEventListener('click', function() {
+            fetch(this.dataset.url, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken(), 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    if (data.favorited) {
+                        this.className = 'btn btn-warning';
+                        this.innerText = '★ В избранном';
+                    } else {
+                        this.className = 'btn btn-outline-warning';
+                        this.innerText = '☆ В избранное';
+                    }
+                }
+            });
+        });
+    }
+
+    // 2. Участие в проекте
+    const partBtn = document.getElementById('toggle-participate-btn');
+    if (partBtn) {
+        partBtn.addEventListener('click', function() {
+            fetch(this.dataset.url, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken(), 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    window.location.reload(); // Перезагружаем страницу, чтобы обновился список участников в UI
+                }
+            });
+        });
+    }
+
+    // 3. Завершение проекта
+    const completeBtn = document.getElementById('complete-project-btn');
+    if (completeBtn) {
+        completeBtn.addEventListener('click', function() {
+            if (confirm('Вы уверены, что хотите закрыть набор в проект?')) {
+                fetch(this.dataset.url, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCsrfToken(), 'Content-Type': 'application/json' }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'ok' && data.project_status === 'closed') {
+                        window.location.reload();
+                    }
+                });
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
