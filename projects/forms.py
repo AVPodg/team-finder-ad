@@ -19,3 +19,4 @@ class ProjectForm(forms.ModelForm):
             "github_url": forms.URLInput(attrs={"placeholder": "https://github.com/owner/repository"}),
             "status": forms.Select(),
         }
+        
