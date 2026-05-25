@@ -32,5 +32,3 @@ class UserAdmin(BaseUserAdmin):
         ),
     )
     filter_horizontal = ("groups", "user_permissions", "favorites")
-
-# Register your models here.

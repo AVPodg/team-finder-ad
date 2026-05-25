@@ -1,6 +1,4 @@
-# core/enums.py
 from enum import StrEnum
-
 
 class AvatarColor(StrEnum):
     BLUE = "#2563EB"
@@ -9,7 +7,6 @@ class AvatarColor(StrEnum):
     ORANGE = "#EA580C"
     GREEN = "#16A34A"
     CYAN = "#0891B2"
-
 
 # Коллекция всех цветов для аватаров
 AVATAR_COLORS = [

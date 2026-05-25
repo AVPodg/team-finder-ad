@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 
-from project.models import Project
+from projects.models import Project
 from users.models import User
 
 

@@ -1,4 +1,3 @@
-# users/models.py
 from __future__ import annotations
 
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
@@ -60,3 +59,4 @@ class User(AbstractBaseUser, PermissionsMixin):
             )
         self.full_clean()
         super().save(*args, **kwargs)
+        

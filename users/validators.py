@@ -1,4 +1,3 @@
-# users/validators.py
 import re
 from urllib.parse import urlparse
 
@@ -28,3 +27,4 @@ def validate_github_url(value: str) -> None:
     hostname = (parsed.hostname or "").lower()
     if hostname not in GITHUB_HOSTNAMES:
         raise ValidationError("Укажите ссылку на github.com.")
+    

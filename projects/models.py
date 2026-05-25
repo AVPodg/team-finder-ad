@@ -2,8 +2,8 @@ from django.conf import settings
 from django.db import models
 from django.urls import reverse
 
-from users.models import validate_github_url
 from projects.constants import MAX_PROJECT_NAME_LENGTH, STATUS_MAX_LENGTH
+from users.models import validate_github_url
 
 
 class Project(models.Model):
@@ -22,8 +22,15 @@ class Project(models.Model):
         related_name="owned_projects",
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    github_url = models.URLField(blank=True, validators=[validate_github_url])
-    status = models.CharField(max_length=STATUS_MAX_LENGTH, choices=STATUS_CHOICES, default=STATUS_OPEN)
+    github_url = models.URLField(
+        blank=True,
+        validators=[validate_github_url]
+    )
+    status = models.CharField(
+        max_length=STATUS_MAX_LENGTH,
+        choices=STATUS_CHOICES,
+        default=STATUS_OPEN
+    )
     participants = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         blank=True,
@@ -38,3 +45,4 @@ class Project(models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("projects:detail", kwargs={"pk": self.pk})
+    

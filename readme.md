@@ -41,14 +41,15 @@
    Откройте .env и заполнить его следующими данными: 
    ``` 
    Фрагмент кода 
-   DJANGO_SECRET_KEY=ваш_секретный_ключ 
-   DJANGO_DEBUG=True 
-   # Настройки PostgreSQL из ТЗ 
-   DB_NAME=teamfinder_db 
-   DB_USER=postgres 
-   DB_PASSWORD=your_secure_password 
-   DB_HOST=localhost 
-   DB_PORT=5432 
+   DJANGO_SECRET_KEY=change_for_safety
+   DJANGO_DEBUG=True
+   DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,.localhost,.teamfinder.com
+
+   POSTGRES_DB=team_finder
+   POSTGRES_USER=team_finder
+   POSTGRES_PASSWORD=team_finder
+   POSTGRES_HOST=localhost
+   POSTGRES_PORT=5436
    ``` 
  
 4. **Подготовка базы данных (Миграции)** 

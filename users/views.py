@@ -1,4 +1,3 @@
-# users/views.py
 from django.contrib import messages
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
@@ -7,7 +6,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from users.forms import EmailAuthenticationForm, RegisterForm, UserUpdateForm
 from users.models import User
-from users.services import get_query_prefix, paginate_users
+from users.services import get_query_prefix
+from projects.services import paginate
 
 
 def register_view(request):
@@ -98,7 +98,7 @@ def list_view(request):
             )
 
     users = users.distinct()
-    page_obj = paginate_users(request, users)
+    page_obj = paginate(request, users)
 
     context = {
         "active_filter": active_filter,
